@@ -8,17 +8,42 @@
     <style>
         /* --- Requested Style Changes --- */
         header {
-            font-size: 2rem;      /* Makes the font larger */
-            font-weight: bold;    /* Makes the font bold */
-            color: #0d5c05;       /* Sets the font color to green */
+            font-size: 2rem;
+            font-weight: bold;
+            color: #0d5c05;
         }
         .status-pending {
-            color: orange;        /* Sets the 'Pending' status font color to orange */
+            color: orange;
+        }
+        
+        /* New Styles for the Push Notification Pop-up */
+        #pushNotification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #138808;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.5s, transform 0.5s;
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        .show-notification {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
         }
     </style>
 </head>
 <body>
     <header>Track My Issues</header>
+
+    <div id="pushNotification">
+        <span id="notificationMessage"></span>
+    </div>
 
     <div class="dashboard-section">
         <a href="dashboard_citizen.html"><button style="background-color: #6c757d;">Report a New Issue</button></a>
@@ -41,27 +66,49 @@
 
     <script type="module">
         import { auth, db } from "./firebase-config.js";
-        import { fetchCitizenIssues } from "./script.js"; // We need this function from script.js
+        import { fetchCitizenIssues } from "./script.js";
 
         async function loadMyIssues() {
             const myIssuesContainer = document.getElementById("myIssuesContainer");
+            const notificationContainer = document.getElementById("notificationContainer");
+            const pushNotification = document.getElementById("pushNotification");
+            const notificationMessage = document.getElementById("notificationMessage");
             const currentUser = auth.currentUser;
+
             if (!currentUser) {
                 myIssuesContainer.innerHTML = "<p>Please log in to see your issues. <a href='index.html'>Login here</a>.</p>";
+                notificationContainer.innerHTML = "<li>Please log in to see notifications.</li>";
                 return;
             }
 
             myIssuesContainer.innerHTML = "<p>Fetching your issues...</p>";
-            const issues = await fetchCitizenIssues(currentUser.uid); // Calling the function
+            notificationContainer.innerHTML = "";
+            let hasNewNotifications = false;
+            let newNotificationMessage = "";
+
+            const issues = await fetchCitizenIssues(currentUser.uid);
             myIssuesContainer.innerHTML = "";
 
             if (issues.length === 0) {
                 myIssuesContainer.innerHTML = "<p>You have not submitted any issues yet.</p>";
-                return;
             }
 
             issues.forEach(issue => {
                 const status = issue.status;
+
+                // Check for a status change and generate a new notification
+                const lastKnownStatus = localStorage.getItem(`issueStatus_${issue.id}`);
+                if (lastKnownStatus && lastKnownStatus !== status) {
+                    hasNewNotifications = true;
+                    newNotificationMessage = `The status of your issue "${issue.description}" has been updated to "${status}".`;
+                    const li = document.createElement("li");
+                    li.innerHTML = newNotificationMessage;
+                    notificationContainer.appendChild(li);
+                }
+
+                // Update the last known status in local storage for the next visit
+                localStorage.setItem(`issueStatus_${issue.id}`, status);
+
                 let progress = 10;
                 if (status === 'In Progress') progress = 50;
                 if (status === 'Completed' || status === 'Rejected') progress = 100;
@@ -74,35 +121,30 @@
                 `;
                 myIssuesContainer.appendChild(issueElement);
             });
-        }
-
-        function checkNotifications() {
-            const currentUser = auth.currentUser; if (!currentUser) return;
-            const notificationContainer = document.getElementById("notificationContainer");
-            notificationContainer.innerHTML = ""; let hasNotifications = false;
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith(`notification_${currentUser.uid}`)) {
-                    hasNotifications = true;
-                    const notification = JSON.parse(localStorage.getItem(key));
-                    const li = document.createElement("li");
-                    li.innerHTML = `${notification.message} <button class="delete-notification-btn" data-key="${key}">Dismiss</button>`;
-                    notificationContainer.appendChild(li);
-                }
+            
+            if (hasNewNotifications) {
+                // Show the push notification pop-up
+                notificationMessage.textContent = newNotificationMessage;
+                pushNotification.style.display = 'block';
+                setTimeout(() => {
+                    pushNotification.classList.add('show-notification');
+                }, 10); // Small delay to allow for the transition
+                
+                // Hide the pop-up after 5 seconds
+                setTimeout(() => {
+                    pushNotification.classList.remove('show-notification');
+                    setTimeout(() => {
+                        pushNotification.style.display = 'none';
+                    }, 500); // Wait for transition to finish
+                }, 5000);
+            } else {
+                notificationContainer.innerHTML = "<li>No new notifications.</li>";
             }
-            if (!hasNotifications) { notificationContainer.innerHTML = "<li>No new notifications.</li>"; }
-            document.querySelectorAll('.delete-notification-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    localStorage.removeItem(e.target.dataset.key);
-                    checkNotifications();
-                });
-            });
         }
 
         auth.onAuthStateChanged(user => {
             if (user) {
                 loadMyIssues();
-                checkNotifications();
             } else {
                 document.getElementById("myIssuesContainer").innerHTML = "<p>Please log in to see your issues. <a href='index.html'>Login here</a>.</p>";
                 document.getElementById("notificationContainer").innerHTML = "<li>Please log in to see notifications.</li>";
