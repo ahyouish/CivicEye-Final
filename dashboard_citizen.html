@@ -16,6 +16,9 @@
       font-size: 2rem;
       font-weight: bold;
       color: #0d5c05;
+      /* Padding added to prevent overlap with profile button */
+      padding-right: 120px; 
+      padding-left: 10px; /* Balances the look slightly */
     }
     .profile-btn {
       color: white;
@@ -91,7 +94,6 @@
     async function handleSubmission() {
         const photoInput = document.getElementById("issuePhoto"), desc = document.getElementById("issueDesc").value, tagsInput = document.getElementById("issueTags").value, photoFile = photoInput.files[0];
         
-        // This logic now correctly handles the single value from the dropdown
         const tags = tagsInput ? [tagsInput] : []; 
         
         if (!desc || !photoFile || tags.length === 0) { alert("Please provide a description, photo, and select an issue type."); return; }
