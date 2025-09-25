@@ -24,21 +24,21 @@
 
         /* --- Requested Style Changes --- */
         header {
-            font-size: 2rem;      /* Larger and bold green header */
+            font-size: 2rem;
             font-weight: bold;
             color: #0d5c05;
         }
         .profile-btn {
-            color: white; /* Sets 'My Profile' font color to white */
+            color: white;
         }
 
         /* --- New Responsive Layout for Desktop --- */
         @media (min-width: 1024px) {
             .dashboard-section {
                 display: grid;
-                grid-template-columns: 2fr 1fr; /* 2 parts main content, 1 part sidebar */
+                grid-template-columns: 2fr 1fr;
                 gap: 25px;
-                max-width: 1400px; /* Allow container to be wider on desktop */
+                max-width: 1400px;
             }
         }
     </style>
@@ -210,7 +210,10 @@
         function updateSummaryCards(issues) { document.getElementById('total-issues').textContent = issues.length; document.getElementById('pending-issues').textContent = issues.filter(i => i.status === 'Pending').length; document.getElementById('completed-issues').textContent = issues.filter(i => i.status === 'Completed').length; }
         function applyFilters() { let filteredIssues = [...allIssues]; const searchTerm = searchInput.value.toLowerCase(); const statusValue = statusFilter.value; const tagValue = tagFilter.value; if (searchTerm) { filteredIssues = filteredIssues.filter(issue => issue.description.toLowerCase().includes(searchTerm)); } if (statusValue !== 'all') { filteredIssues = filteredIssues.filter(issue => issue.status === statusValue); } if (tagValue !== 'all') { filteredIssues = filteredIssues.filter(issue => (issue.tags || []).includes(tagValue)); } renderIssues(filteredIssues); }
         searchInput.addEventListener('keyup', applyFilters); statusFilter.addEventListener('change', applyFilters); tagFilter.addEventListener('change', applyFilters); document.getElementById("refreshBtn").addEventListener("click", () => { setupRealTimeListener(); alert("Data is now re-syncing from the server."); });
-        window.showMap = (lat, lng) => window.open(`http://googleusercontent.com/maps/google.com/1{lat},${lng}`, '_blank');
+        
+        // --- THIS LINE IS NOW CORRECTED ---
+        window.showMap = (lat, lng) => window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+        
         window.scrollToIssue = (issueId) => { const issueRow = document.getElementById(`issue-row-${issueId}`); if (issueRow) { issueRow.scrollIntoView({ behavior: 'smooth', block: 'center' }); issueRow.classList.add('issue-highlight'); setTimeout(() => { issueRow.classList.remove('issue-highlight'); }, 2500); } };
         window.handleUpdate = async (issueId) => { const newStatus = document.getElementById(`status-select-${issueId}`).value; const currentUser = auth.currentUser; if (!currentUser) { alert("You are not logged in."); return; } try { await updateIssueStatus(issueId, newStatus, currentUser.uid); alert(`Status updated successfully.`); } catch (error) { console.error("Error updating status:", error); alert("Failed to update status. Please try again."); } };
         window.handleDelete = async (issueId) => { if (confirm("Are you sure you want to delete this issue?")) { try { await deleteIssue(issueId); alert("Issue deleted successfully."); } catch (error) { console.error("Error deleting issue:", error); alert("Failed to delete issue. Please try again."); } } };
