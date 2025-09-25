@@ -24,21 +24,21 @@
 
         /* --- Requested Style Changes --- */
         header {
-            font-size: 2rem;      /* Larger and bold green header */
+            font-size: 2rem;
             font-weight: bold;
             color: #0d5c05;
         }
         .profile-btn {
-            color: white;         /* White font for 'My Profile' */
+            color: white;
         }
 
         /* --- New Responsive Layout for Desktop --- */
         @media (min-width: 1024px) {
             .dashboard-section {
                 display: grid;
-                grid-template-columns: 2fr 1fr; /* 2 parts main content, 1 part sidebar */
+                grid-template-columns: 2fr 1fr;
                 gap: 25px;
-                max-width: 1400px; /* Allow container to be wider on desktop */
+                max-width: 1400px;
             }
         }
     </style>
@@ -255,7 +255,9 @@
              alert("Data is now re-syncing from the server.");
         });
 
-        window.showMap = (lat, lng) => window.open(`http://googleusercontent.com/maps/google.com/1{lat},${lng}`, '_blank');
+        // --- THIS LINE IS NOW CORRECTED ---
+        window.showMap = (lat, lng) => window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+        
         window.scrollToIssue = (issueId) => {
             const issueRow = document.getElementById(`issue-row-${issueId}`);
             if (issueRow) {
